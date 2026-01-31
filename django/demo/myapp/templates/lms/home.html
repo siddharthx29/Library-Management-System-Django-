@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            color: #34495e;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 0.9em;
+        }
+
+        .btn-edit {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-add {
+            background-color: #2ecc71;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .empty-message {
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Library Management System</h1>
+    </header>
+
+    <div class="container">
+        <button class="btn btn-add" onclick="window.location.href='{% url 'add_book' %}'">Add New Book</button>
+
+        <h2>Books:</h2>
+        <ul>
+            {% for book in books %}
+                <li>
+                    <span>{{ book.title }} - {{ book.author }} ({{ book.quantity }})</span>
+                    <span>
+                        <button class="btn btn-edit" onclick="window.location.href='{% url 'edit_book' book.id %}'">Edit</button>
+                        <button class="btn btn-delete" onclick="window.location.href='{% url 'delete_book' book.id %}'">Delete</button>
+                    </span>
+                </li>
+            {% empty %}
+                <li class="empty-message">No books available.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
