@@ -2,109 +2,286 @@
 <html>
 <head>
     <title>Library Management System</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Poppins',sans-serif;
         }
 
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
+        body{
+            background:linear-gradient(135deg,#eef2f3,#dfe9f3);
+            min-height:100vh;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 2em;
+        /* ===== HEADER ===== */
+        header{
+            background:linear-gradient(45deg,#2c3e50,#3498db);
+            color:white;
+            padding:25px;
+            text-align:center;
+            box-shadow:0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        header h1{
+            font-size:28px;
         }
 
-        h2 {
-            color: #34495e;
+        #clock{
+            font-size:14px;
+            margin-top:5px;
+            opacity:0.9;
         }
 
-        ul {
-            list-style: none;
-            padding: 0;
+        .container{
+            width:92%;
+            max-width:1100px;
+            margin:25px auto;
         }
 
-        li {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* ===== DASHBOARD CARDS ===== */
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:15px;
+            margin-bottom:25px;
         }
 
-        li:last-child {
-            border-bottom: none;
+        .stat-card{
+            background:white;
+            padding:18px;
+            border-radius:12px;
+            text-align:center;
+            box-shadow:0 4px 12px rgba(0,0,0,0.1);
+            transition:.3s;
         }
 
-        .btn {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 5px;
-            font-size: 0.9em;
+        .stat-card:hover{
+            transform:translateY(-4px);
         }
 
-        .btn-edit {
-            background-color: #3498db;
-            color: white;
+        .stat-number{
+            font-size:22px;
+            font-weight:600;
+            color:#3498db;
         }
 
-        .btn-delete {
-            background-color: #e74c3c;
-            color: white;
+        /* ===== TOP BAR ===== */
+        .top-bar{
+            display:flex;
+            justify-content:space-between;
+            flex-wrap:wrap;
+            gap:10px;
+            margin-bottom:20px;
         }
 
-        .btn-add {
-            background-color: #2ecc71;
-            color: white;
-            margin-bottom: 10px;
+        input, select{
+            padding:8px 12px;
+            border-radius:20px;
+            border:1px solid #ccc;
+            outline:none;
         }
 
-        .empty-message {
-            color: #888;
-            font-style: italic;
+        /* ===== BUTTONS ===== */
+        .btn{
+            padding:8px 14px;
+            border:none;
+            border-radius:20px;
+            color:white;
+            cursor:pointer;
+            transition:.3s;
         }
+
+        .btn-add{ background:#2ecc71; }
+        .btn-edit{ background:#3498db; }
+        .btn-delete{ background:#e74c3c; }
+
+        .btn:hover{
+            transform:scale(1.05);
+        }
+
+        /* ===== BOOK CARDS ===== */
+        ul{
+            list-style:none;
+        }
+
+        .book-card{
+            background:white;
+            margin-bottom:12px;
+            padding:15px;
+            border-radius:12px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            box-shadow:0 3px 10px rgba(0,0,0,0.1);
+            transition:.3s;
+        }
+
+        .book-card:hover{
+            box-shadow:0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .book-left{
+            display:flex;
+            align-items:center;
+            gap:15px;
+        }
+
+        .book-icon{
+            font-size:30px;
+        }
+
+        .quantity{
+            font-size:12px;
+            margin-top:3px;
+        }
+
+        .badge{
+            padding:3px 8px;
+            border-radius:10px;
+            font-size:11px;
+            color:white;
+        }
+
+        .available{ background:#2ecc71; }
+        .low{ background:#f39c12; }
+        .out{ background:#e74c3c; }
+
+        footer{
+            text-align:center;
+            padding:15px;
+            margin-top:30px;
+            color:#666;
+            font-size:13px;
+        }
+
+        .empty-message{
+            text-align:center;
+            padding:30px;
+            color:#888;
+        }
+
     </style>
 </head>
+
 <body>
-    <header>
-        <h1>Library Management System</h1>
-    </header>
 
-    <div class="container">
-        <button class="btn btn-add" onclick="window.location.href='{% url 'add_book' %}'">Add New Book</button>
+<header>
+    <h1>📚 Library Management System</h1>
+    <div id="clock"></div>
+</header>
 
-        <h2>Books:</h2>
-        <ul>
-            {% for book in books %}
-                <li>
-                    <span>{{ book.title }} - {{ book.author }} ({{ book.quantity }})</span>
-                    <span>
-                        <button class="btn btn-edit" onclick="window.location.href='{% url 'edit_book' book.id %}'">Edit</button>
-                        <button class="btn btn-delete" onclick="window.location.href='{% url 'delete_book' book.id %}'">Delete</button>
-                    </span>
-                </li>
-            {% empty %}
-                <li class="empty-message">No books available.</li>
-            {% endfor %}
-        </ul>
+<div class="container">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="stats">
+        <div class="stat-card">
+            <div>Total Books</div>
+            <div class="stat-number">{{ books|length }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div>Total Authors</div>
+            <div class="stat-number">{{ books|length }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div>Available</div>
+            <div class="stat-number">
+                {% for b in books %}{{ b.quantity|add:0 }}{% endfor %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div>Status</div>
+            <div class="stat-number">Active</div>
+        </div>
     </div>
+
+
+    <!-- ===== CONTROLS ===== -->
+    <div class="top-bar">
+        <button class="btn btn-add"
+            onclick="window.location.href='{% url 'add_book' %}'">
+            + Add Book
+        </button>
+
+        <input type="text" id="searchInput" placeholder="Search books...">
+    </div>
+
+
+    <!-- ===== BOOK LIST ===== -->
+    <ul id="bookList">
+        {% for book in books %}
+        <li class="book-card">
+
+            <div class="book-left">
+                <div class="book-icon">📖</div>
+
+                <div>
+                    <strong>{{ book.title }}</strong><br>
+                    <small>Author: {{ book.author }}</small>
+
+                    <div class="quantity">
+                        {% if book.quantity > 5 %}
+                            <span class="badge available">Available ({{ book.quantity }})</span>
+                        {% elif book.quantity > 0 %}
+                            <span class="badge low">Low ({{ book.quantity }})</span>
+                        {% else %}
+                            <span class="badge out">Out of stock</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button class="btn btn-edit"
+                    onclick="window.location.href='{% url 'edit_book' book.id %}'">
+                    Edit
+                </button>
+
+                <button class="btn btn-delete"
+                    onclick="window.location.href='{% url 'delete_book' book.id %}'">
+                    Delete
+                </button>
+            </div>
+
+        </li>
+        {% empty %}
+        <li class="empty-message">No books available 📭</li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+
+
+<!-- ===== SEARCH + CLOCK ===== -->
+<script>
+    // Search
+    const input = document.getElementById("searchInput");
+    const cards = document.querySelectorAll(".book-card");
+
+    input.addEventListener("keyup", function () {
+        const value = this.value.toLowerCase();
+        cards.forEach(card => {
+            card.style.display =
+                card.innerText.toLowerCase().includes(value) ? "flex" : "none";
+        });
+    });
+
+    // Live clock
+    function updateClock(){
+        document.getElementById("clock").innerText =
+            new Date().toLocaleString();
+    }
+    setInterval(updateClock,1000);
+    updateClock();
+</script>
+
 </body>
 </html>
