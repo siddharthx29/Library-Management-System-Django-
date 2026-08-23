@@ -1,0 +1,20 @@
+{% extends "lms/base.html" %}
+
+{% block title %}404 — Catalog Record Not Found | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}404 Not Found{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; text-align: center;">
+    <div class="card" style="padding: 40px 24px;">
+        <div style="font-family: var(--font-mono); font-size: 3rem; color: var(--color-accent-amber); font-weight: 700;">404</div>
+        <h2 style="margin-top: 12px;">Archival Record Not Located</h2>
+        <p style="color: var(--color-text-muted); margin: 12px 0 24px;">
+            The catalog entry, patron record, or resource you requested could not be retrieved from the library repository.
+        </p>
+        <div>
+            <a href="{% url 'home' %}" class="btn btn-primary">Return to Operations Dashboard</a>
+            <a href="{% url 'catalog_list' %}" class="btn btn-secondary">Search Catalog</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

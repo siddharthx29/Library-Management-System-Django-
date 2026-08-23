@@ -1,0 +1,252 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Library Overview | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}Library Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>Library Overview & Operations</h1>
+        <p>Real-time circulation velocity, collection health, and institutional research borrowing.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'issue_book' %}" class="btn btn-primary">
+            <span>⚡ Issue Book</span>
+        </a>
+        <a href="{% url 'add_book' %}" class="btn btn-secondary">
+            <span>+ New Acquisition</span>
+        </a>
+    </div>
+</div>
+
+<!-- Archival Insights Banner from Stitch -->
+<div class="archive-insight-box">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <i data-lucide="sparkles" style="width: 20px; height: 20px; color: var(--archive-emerald); flex-shrink: 0;"></i>
+        <div class="archive-insight-text">
+            <strong>Archival Intelligence Finding:</strong> STEM & Computer Science titles represent <strong>31% of active circulation</strong> this semester. Reordering thresholds have been dynamically calibrated.
+        </div>
+    </div>
+    <a href="{% url 'analytics' %}" class="btn btn-sm btn-secondary" style="border-color: #C4E4D8; color: var(--archive-emerald);">
+        View Findings →
+    </a>
+</div>
+
+<!-- KPI Metric Cards (Stitch Style) -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Catalogued Volumes</div>
+        <div class="kpi-value">{{ summary.total_copies }}</div>
+        <div class="kpi-meta">
+            <span class="kpi-badge-good">+2.4% this academic term</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Availability Rate</div>
+        <div class="kpi-value">{{ summary.available_copies }}</div>
+        <div class="kpi-meta">
+            <span class="kpi-badge-good">{{ summary.utilization_rate }}% in active circulation</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Current Loans</div>
+        <div class="kpi-value">{{ summary.active_loans }}</div>
+        <div class="kpi-meta">
+            <span>Issued to registered scholars</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Overdue Tracking</div>
+        <div class="kpi-value" style="color: {% if summary.overdue_loans > 0 %}var(--archive-crimson){% else %}var(--archive-ink){% endif %};">
+            {{ summary.overdue_loans }}
+        </div>
+        <div class="kpi-meta">
+            {% if summary.overdue_loans > 0 %}
+                <span class="kpi-badge-alert">{{ summary.overdue_rate }}% overdue threshold</span>
+            {% else %}
+                <span class="kpi-badge-good">All items compliant</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Active Members</div>
+        <div class="kpi-value">{{ summary.total_patrons }}</div>
+        <div class="kpi-meta">
+            <span>Fellows, faculty & students</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Fine Intelligence</div>
+        <div class="kpi-value">${{ summary.outstanding_fines|floatformat:2 }}</div>
+        <div class="kpi-meta">
+            <span>${{ summary.total_collected_fines|floatformat:2 }} recovered YTD</span>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Intelligence Section (Charts) -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Monthly Circulation Trend Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Circulation Activity</h3>
+                <span style="font-size: 0.78rem; color: var(--archive-muted);">Monthly checkouts vs return volume (6-Month Rolling Window)</span>
+            </div>
+            <a href="{% url 'analytics' %}" class="btn btn-sm btn-secondary">Deep Analytics →</a>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="circulationTrendChart" data-chart-data='{{ circulation_trends_json|safe }}'></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection Distribution Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Collection Distribution</h3>
+                <span style="font-size: 0.78rem; color: var(--archive-muted);">Holdings balance across academic disciplines</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 280px;">
+                <canvas id="genreDistChart" data-chart-data='{{ categories_json|safe }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operations Tables Grid -->
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Popular Titles / Recent Activity Register -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Popular Titles & Active Circulation</h3>
+                <span style="font-size: 0.78rem; color: var(--archive-muted);">High-velocity catalog titles and checkout ledger</span>
+            </div>
+            <a href="{% url 'loan_list' %}" class="btn btn-sm btn-secondary">Full Register →</a>
+        </div>
+        <div class="table-container" style="border: none; border-radius: 0;">
+            <table class="academic-table">
+                <thead>
+                    <tr>
+                        <th>Accession & Title</th>
+                        <th>Borrower</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in summary.recent_loans %}
+                        <tr>
+                            <td>
+                                <div style="margin-bottom: 2px;">
+                                    <a href="{% url 'book_detail' loan.book.id %}" style="font-weight: 600; color: var(--archive-ink);">
+                                        {{ loan.book.title }}
+                                    </a>
+                                </div>
+                                <div>
+                                    <span class="accession-chip">{{ loan.book.call_number|default:"201-B" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'patron_detail' loan.student.id %}" style="font-weight: 500; color: var(--archive-ink);">
+                                    {{ loan.student.name }}
+                                </a>
+                                <div style="font-size: 0.75rem; color: var(--archive-muted);">{{ loan.student.patron_id }}</div>
+                            </td>
+                            <td>
+                                <span style="font-family: var(--font-mono); font-size: 0.82rem;">{{ loan.due_date|date:"M d, Y" }}</span>
+                            </td>
+                            <td>
+                                {% if loan.return_date %}
+                                    <span class="badge badge-neutral">Restocked</span>
+                                {% elif loan.is_overdue %}
+                                    <span class="badge badge-overdue">{{ loan.overdue_days }}d Overdue</span>
+                                {% else %}
+                                    <span class="badge badge-available">Active</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                {% if not loan.return_date %}
+                                    <button class="btn btn-sm btn-secondary" 
+                                            data-modal-target="returnModal"
+                                            data-loan-id="{{ loan.id }}"
+                                            data-book-title="{{ loan.book.title }}"
+                                            data-student-name="{{ loan.student.name }}">
+                                        Check In
+                                    </button>
+                                {% else %}
+                                    <span style="font-size: 0.75rem; color: var(--archive-muted-light);">Completed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: var(--archive-muted);">
+                                No circulation loans currently active.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Collection Intelligence: High Demand Reorders -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Acquisition Priority Alert</h3>
+                <span style="font-size: 0.78rem; color: var(--archive-muted);">Titles with depleted shelf stock requiring reorders</span>
+            </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div style="display: flex; flex-direction: column;">
+                {% for rec in recommendations %}
+                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--archive-divider); display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1; padding-right: 12px;">
+                            <a href="{% url 'book_detail' rec.book.id %}" style="font-weight: 600; color: var(--archive-ink);">
+                                {{ rec.book.title }}
+                            </a>
+                            <div style="font-size: 0.78rem; color: var(--archive-muted); margin-top: 2px;">
+                                By {{ rec.book.author }} · {{ rec.total_borrows }} total loans
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div>
+                                {% if rec.available_copies == 0 %}
+                                    <span class="badge badge-overdue">0 in stock</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ rec.available_copies }} left of {{ rec.quantity }}</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--archive-muted); margin-top: 4px;">
+                                Recommend +{{ rec.suggested_copies }} copies
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="padding: 30px; text-align: center; color: var(--archive-muted);">
+                        Catalogue inventory is balanced with current circulation velocity.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer" style="text-align: center;">
+            <a href="{% url 'analytics' %}" style="font-size: 0.82rem; font-weight: 600; color: var(--archive-crimson);">
+                View Full Intelligence Report →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ patron.name }} | Patron Profile{% endblock %}
+{% block page_title_crumb %}Patron Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+            <span class="badge badge-neutral">{{ patron.get_role_display }}</span>
+            {% if patron.is_active %}
+                <span class="badge badge-available">Active Privileges</span>
+            {% else %}
+                <span class="badge badge-overdue">Suspended</span>
+            {% endif %}
+        </div>
+        <h1>{{ patron.name }}</h1>
+        <p style="font-family: var(--font-mono); font-size: 0.95rem; color: var(--color-primary);">{{ patron.patron_id }} · {{ patron.department }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'issue_book' %}?student_id={{ patron.id }}" class="btn btn-primary">
+            <span>+ Checkout Item</span>
+        </a>
+        <a href="{% url 'patron_edit' patron.id %}" class="btn btn-secondary">
+            <span>Edit Profile</span>
+        </a>
+        <a href="{% url 'patron_list' %}" class="btn btn-secondary">
+            <span>← Patron Directory</span>
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Profile & Contact Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Patron Membership Details</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Institutional Email</div>
+                    <div style="margin-top: 4px; font-weight: 500;">{{ patron.email }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Contact Phone</div>
+                    <div style="margin-top: 4px; font-weight: 500;">{{ patron.phone|default:"Not recorded" }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Department / School</div>
+                    <div style="margin-top: 4px; font-weight: 500;">{{ patron.department }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Borrowing Quota</div>
+                    <div style="margin-top: 4px; font-weight: 600;">
+                        {{ patron.active_loans_count }} / {{ patron.max_borrow_limit }} active loans
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outstanding Fines Balance Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Financial Ledger</h3>
+        </div>
+        <div class="card-body">
+            <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Outstanding Balance</div>
+            <div style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; color: {% if patron.total_fines_due > 0 %}var(--color-accent-crimson){% else %}var(--color-accent-teal){% endif %}; margin-top: 4px;">
+                ${{ patron.total_fines_due|floatformat:2 }}
+            </div>
+            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 8px;">
+                {% if patron.total_fines_due > 0 %}
+                    Overdue penalties require desk settlement.
+                {% else %}
+                    Account is in good financial standing.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Active Borrowings Table -->
+<div class="card" style="margin-bottom: 28px;">
+    <div class="card-header">
+        <h3>Currently Checked Out Items</h3>
+        <span style="font-size: 0.78rem; color: var(--color-text-muted);">{{ active_loans.count }} item(s) in possession</span>
+    </div>
+    <div class="table-container" style="border: none;">
+        <table class="academic-table">
+            <thead>
+                <tr>
+                    <th>Title & Call Number</th>
+                    <th>Checkout Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Circulation Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in active_loans %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'book_detail' loan.book.id %}" style="font-weight: 600;">
+                                {{ loan.book.title }}
+                            </a>
+                            <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ loan.book.call_number|default:"Standard Stack" }}</div>
+                        </td>
+                        <td>{{ loan.issue_date|date:"M d, Y" }}</td>
+                        <td>
+                            <span style="{% if loan.is_overdue %}color: var(--color-accent-crimson); font-weight: 700;{% endif %}">
+                                {{ loan.due_date|date:"M d, Y" }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if loan.is_overdue %}
+                                <span class="badge badge-overdue">{{ loan.overdue_days }}d Overdue (${{ loan.calculated_fine|floatformat:2 }})</span>
+                            {% else %}
+                                <span class="badge badge-borrowed">Active (Renewed {{ loan.renewal_count }}x)</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-sm btn-success"
+                                    data-modal-target="returnModal"
+                                    data-loan-id="{{ loan.id }}"
+                                    data-book-title="{{ loan.book.title }}"
+                                    data-student-name="{{ patron.name }}">
+                                Check In
+                            </button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 24px; color: var(--color-text-muted);">
+                            No active items currently borrowed.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Fine Ledger for this Patron -->
+{% if fines.exists %}
+    <div class="card" style="margin-bottom: 28px;">
+        <div class="card-header">
+            <h3>Fine Assessments & Settlement Ledger</h3>
+        </div>
+        <div class="table-container" style="border: none;">
+            <table class="academic-table">
+                <thead>
+                    <tr>
+                        <th>Date Assessed</th>
+                        <th>Associated Item</th>
+                        <th>Amount Assessed</th>
+                        <th>Settlement Status</th>
+                        <th>Reason / Notes</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fine in fines %}
+                        <tr>
+                            <td>{{ fine.created_at|date:"M d, Y" }}</td>
+                            <td>{{ fine.issue.book.title }}</td>
+                            <td style="font-family: var(--font-mono); font-weight: 600;">${{ fine.amount|floatformat:2 }}</td>
+                            <td>
+                                {% if fine.status == 'PAID' %}
+                                    <span class="badge badge-available">Settled</span>
+                                {% elif fine.status == 'WAIVED' %}
+                                    <span class="badge badge-neutral">Waived</span>
+                                {% else %}
+                                    <span class="badge badge-overdue">Due: ${{ fine.remaining_amount|floatformat:2 }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.8rem; color: var(--color-text-muted);">{{ fine.notes }}</td>
+                            <td style="text-align: right;">
+                                {% if fine.status == 'PENDING' %}
+                                    <form action="{% url 'settle_fine' fine.id %}" method="POST" style="display: inline-flex; gap: 4px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="PAID">
+                                        <input type="hidden" name="payment_amount" value="{{ fine.remaining_amount }}">
+                                        <button type="submit" class="btn btn-sm btn-primary">Mark Paid</button>
+                                    </form>
+                                    <form action="{% url 'settle_fine' fine.id %}" method="POST" style="display: inline-flex; gap: 4px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="WAIVED">
+                                        <input type="hidden" name="notes" value="Authorized administrative waiver">
+                                        <button type="submit" class="btn btn-sm btn-secondary">Waive</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Borrowing History -->
+<div class="card">
+    <div class="card-header">
+        <h3>Historical Borrowing Archive</h3>
+        <span style="font-size: 0.78rem; color: var(--color-text-muted);">Completed loan transactions</span>
+    </div>
+    <div class="table-container" style="border: none;">
+        <table class="academic-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Checked Out</th>
+                    <th>Returned Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hist in history_loans %}
+                    <tr>
+                        <td>{{ hist.book.title }}</td>
+                        <td>{{ hist.issue_date|date:"M d, Y" }}</td>
+                        <td>{{ hist.return_date|date:"M d, Y" }}</td>
+                        <td><span class="badge badge-neutral">Completed</span></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+                            No past completed borrowings on file.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

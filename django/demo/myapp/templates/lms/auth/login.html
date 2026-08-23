@@ -1,0 +1,46 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Staff Authentication | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}Sign In{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 40px auto;">
+    <div class="card">
+        <div class="card-header" style="text-align: center; display: block; padding: 28px 24px;">
+            <div class="brand-seal" style="width: 52px; height: 52px; margin: 0 auto 14px;">
+                <i data-lucide="landmark" style="width: 26px; height: 26px; color: #FFFFFF;"></i>
+            </div>
+            <h2>Staff Portal Access</h2>
+            <p style="font-size: 0.85rem; color: var(--archive-muted); margin-top: 4px;">
+                Enter institutional credentials for circulation desk and administration.
+            </p>
+        </div>
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="margin-bottom: 16px;">
+                        {% for err in form.non_field_errors %}
+                            <div>{{ err }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="id_username">Username or Staff ID</label>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-input" placeholder="e.g. librarian_admin">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="id_password">Password</label>
+                    <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-input" placeholder="••••••••">
+                </div>
+            </div>
+            <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="{% url 'home' %}" class="btn btn-secondary">← Guest Overview</a>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

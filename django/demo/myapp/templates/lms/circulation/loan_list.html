@@ -1,0 +1,168 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Circulation Desk | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}Circulation Desk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>Circulation Desk & Active Loans</h1>
+        <p>Manage active borrowings, overdue items, renewals, and scholar returns.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'issue_book' %}" class="btn btn-primary">
+            <span>+ Checkout Item</span>
+        </a>
+    </div>
+</div>
+
+<!-- Tabs & Search Toolbar -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+    <!-- Status Filter Tabs -->
+    <div style="display: flex; gap: 6px;">
+        <a href="?status=ACTIVE{% if search_q %}&q={{ search_q }}{% endif %}" class="btn {% if filter_status == 'ACTIVE' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            Active Loans ({{ active_count }})
+        </a>
+        <a href="?status=OVERDUE{% if search_q %}&q={{ search_q }}{% endif %}" class="btn {% if filter_status == 'OVERDUE' %}btn-danger{% else %}btn-secondary{% endif %} btn-sm">
+            Overdue Tracking ({{ overdue_count }})
+        </a>
+        <a href="?status=RETURNED{% if search_q %}&q={{ search_q }}{% endif %}" class="btn {% if filter_status == 'RETURNED' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            Returned Archive ({{ returned_count }})
+        </a>
+    </div>
+
+    <!-- Search input -->
+    <form method="GET" action="{% url 'loan_list' %}" style="display: flex; gap: 8px;">
+        <input type="hidden" name="status" value="{{ filter_status }}">
+        <div class="search-input-wrapper" style="min-width: 260px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" name="q" value="{{ search_q }}" class="form-input" placeholder="Search title or borrower...">
+        </div>
+        <button type="submit" class="btn btn-secondary">Search</button>
+        {% if search_q %}
+            <a href="?status={{ filter_status }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Loan Table -->
+<div class="table-container">
+    <table class="academic-table">
+        <thead>
+            <tr>
+                <th>Accession & Work</th>
+                <th>Scholar / Patron</th>
+                <th>Checkout Date</th>
+                <th>Due Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th style="text-align: right;">Circulation Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loan in loans %}
+                <tr>
+                    <td>
+                        <div style="margin-bottom: 2px;">
+                            <a href="{% url 'book_detail' loan.book.id %}" style="font-weight: 600; color: var(--archive-ink);">
+                                {{ loan.book.title }}
+                            </a>
+                        </div>
+                        <div>
+                            <span class="accession-chip">{{ loan.book.call_number|default:"201-B" }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{% url 'patron_detail' loan.student.id %}" style="font-weight: 500; color: var(--archive-ink);">
+                            {{ loan.student.name }}
+                        </a>
+                        <div style="font-size: 0.75rem; color: var(--archive-muted);">
+                            {{ loan.student.patron_id }} · {{ loan.student.department }}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-family: var(--font-mono); font-size: 0.82rem;">{{ loan.issue_date|date:"M d, Y" }}</span>
+                    </td>
+                    <td>
+                        <span style="font-family: var(--font-mono); font-size: 0.82rem; {% if loan.is_overdue %}color: var(--archive-crimson); font-weight: 700;{% endif %}">
+                            {{ loan.due_date|date:"M d, Y" }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if loan.return_date %}
+                            <span style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--archive-green);">
+                                {{ loan.return_date|date:"M d, Y" }}
+                            </span>
+                        {% else %}
+                            <span style="color: var(--archive-muted-light);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if loan.return_date %}
+                            <span class="badge badge-neutral">Restocked</span>
+                        {% elif loan.is_overdue %}
+                            <span class="badge badge-overdue">{{ loan.overdue_days }}d Overdue (${{ loan.calculated_fine|floatformat:2 }})</span>
+                        {% else %}
+                            <span class="badge badge-available">Active ({{ loan.renewal_count }} renewals)</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {% if not loan.return_date %}
+                            <button class="btn btn-sm btn-emerald"
+                                    data-modal-target="returnModal"
+                                    data-loan-id="{{ loan.id }}"
+                                    data-book-title="{{ loan.book.title }}"
+                                    data-student-name="{{ loan.student.name }}">
+                                Check In
+                            </button>
+                            {% if loan.renewal_count < 2 %}
+                                <form action="{% url 'renew_book' loan.id %}" method="POST" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-secondary" title="Extend due date by 14 days">
+                                        Renew
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <span style="font-size: 0.78rem; color: var(--archive-muted);">Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--archive-muted);">
+                        <i data-lucide="inbox" style="width: 32px; height: 32px; color: var(--archive-muted-light); margin-bottom: 8px;"></i>
+                        <div style="font-weight: 600; font-family: var(--font-serif); font-size: 1.15rem;">No circulation loans in this register view.</div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+    <div class="pagination-wrapper">
+        <div>
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} loans
+        </div>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ filter_status }}&q={{ search_q }}" class="page-btn">‹ Previous</a>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if p == page_obj.number %}
+                    <span class="page-btn active">{{ p }}</span>
+                {% elif p > page_obj.number|add:"-3" and p < page_obj.number|add:"3" %}
+                    <a href="?page={{ p }}&status={{ filter_status }}&q={{ search_q }}" class="page-btn">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ filter_status }}&q={{ search_q }}" class="page-btn">Next ›</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

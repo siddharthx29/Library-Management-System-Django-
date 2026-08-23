@@ -1,0 +1,165 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ action_title }} | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}{{ action_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>{{ action_title }}</h1>
+        <p>Register new acquisitions or update archival and inventory records in the catalog.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'catalog_list' %}" class="btn btn-secondary">
+            <span>← Back to Catalog</span>
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    <div class="card-header">
+        <h3>Catalog Metadata Entry</h3>
+    </div>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="card-body">
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <!-- Title -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label" for="{{ form.title.id_for_label }}">
+                        Title / Work Name <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="form-error">{{ form.title.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Author -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label" for="{{ form.author.id_for_label }}">
+                        Author(s) / Editor(s) <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.author }}
+                    {% if form.author.errors %}
+                        <div class="form-error">{{ form.author.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Subject Category -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.category.id_for_label }}">Classification / Subject</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="form-error">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Call Number -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.call_number.id_for_label }}">Shelf Call Number</label>
+                    {{ form.call_number }}
+                    <div class="form-hint">e.g. QA76.73.P98 G85 2024</div>
+                    {% if form.call_number.errors %}
+                        <div class="form-error">{{ form.call_number.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ISBN -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.isbn.id_for_label }}">ISBN (10 or 13 digits)</label>
+                    {{ form.isbn }}
+                    <div class="form-hint">e.g. 978-0131103627</div>
+                    {% if form.isbn.errors %}
+                        <div class="form-error">{{ form.isbn.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Publisher -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.publisher.id_for_label }}">Publisher</label>
+                    {{ form.publisher }}
+                    {% if form.publisher.errors %}
+                        <div class="form-error">{{ form.publisher.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Publication Year -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.publication_year.id_for_label }}">Publication Year</label>
+                    {{ form.publication_year }}
+                    {% if form.publication_year.errors %}
+                        <div class="form-error">{{ form.publication_year.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Edition -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.edition.id_for_label }}">Edition</label>
+                    {{ form.edition }}
+                    {% if form.edition.errors %}
+                        <div class="form-error">{{ form.edition.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Inventory Quantity -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.quantity.id_for_label }}">
+                        Total Copies <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.quantity }}
+                    <div class="form-hint">Total physical inventory owned</div>
+                    {% if form.quantity.errors %}
+                        <div class="form-error">{{ form.quantity.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Available Copies -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.available_copies.id_for_label }}">
+                        Available on Shelf <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.available_copies }}
+                    <div class="form-hint">Copies currently on shelves</div>
+                    {% if form.available_copies.errors %}
+                        <div class="form-error">{{ form.available_copies.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Shelf Location Coordinate -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label" for="{{ form.shelf_location.id_for_label }}">Shelf / Stacks Coordinate</label>
+                    {{ form.shelf_location }}
+                    <div class="form-hint">e.g. Science Wing, Stacks 3A, Shelf 4</div>
+                    {% if form.shelf_location.errors %}
+                        <div class="form-error">{{ form.shelf_location.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Description / Synopsis -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label" for="{{ form.description.id_for_label }}">Scholarly Abstract / Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="form-error">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="{% url 'catalog_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                {% if is_edit %}Save Changes{% else %}Commit to Catalog{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

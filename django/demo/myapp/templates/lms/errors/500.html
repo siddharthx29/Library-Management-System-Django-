@@ -1,0 +1,19 @@
+{% extends "lms/base.html" %}
+
+{% block title %}500 — System Exception | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}500 Error{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; text-align: center;">
+    <div class="card" style="padding: 40px 24px;">
+        <div style="font-family: var(--font-mono); font-size: 3rem; color: var(--color-accent-crimson); font-weight: 700;">500</div>
+        <h2 style="margin-top: 12px;">System Processing Interrupted</h2>
+        <p style="color: var(--color-text-muted); margin: 12px 0 24px;">
+            An unexpected server condition occurred while processing the library transaction. The incident has been recorded in administrative logs.
+        </p>
+        <div>
+            <a href="{% url 'home' %}" class="btn btn-primary">Return to Operations Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

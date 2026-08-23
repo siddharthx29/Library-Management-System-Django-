@@ -1,0 +1,121 @@
+{% extends "lms/base.html" %}
+
+{% block title %}{{ action_title }} | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}{{ action_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>{{ action_title }}</h1>
+        <p>Register university members, faculty, researchers, and configure borrowing quotas.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'patron_list' %}" class="btn btn-secondary">
+            <span>← Back to Patrons</span>
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width: 780px; margin: 0 auto;">
+    <div class="card-header">
+        <h3>Patron Registration Record</h3>
+    </div>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="card-body">
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <!-- Full Name -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label" for="{{ form.name.id_for_label }}">
+                        Full Legal / Institutional Name <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="form-error">{{ form.name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Patron ID -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.patron_id.id_for_label }}">Library Card / Student ID</label>
+                    {{ form.patron_id }}
+                    <div class="form-hint">Leave blank to auto-generate institutional code.</div>
+                    {% if form.patron_id.errors %}
+                        <div class="form-error">{{ form.patron_id.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">
+                        Institutional Email <span style="color: var(--color-accent-crimson);">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="form-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Phone -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.phone.id_for_label }}">Contact Phone</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="form-error">{{ form.phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Academic Department -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.department.id_for_label }}">Department / Faculty</label>
+                    {{ form.department }}
+                    {% if form.department.errors %}
+                        <div class="form-error">{{ form.department.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Role -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.role.id_for_label }}">Institutional Role</label>
+                    {{ form.role }}
+                    {% if form.role.errors %}
+                        <div class="form-error">{{ form.role.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Borrowing Limit -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.max_borrow_limit.id_for_label }}">Borrowing Quota (Books)</label>
+                    {{ form.max_borrow_limit }}
+                    <div class="form-hint">Default: 5 for Undergrads, 10 for Postgrads/Faculty.</div>
+                    {% if form.max_borrow_limit.errors %}
+                        <div class="form-error">{{ form.max_borrow_limit.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Active Status -->
+                <div class="form-group" style="grid-column: span 2; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    {{ form.is_active }}
+                    <label class="form-label" for="{{ form.is_active.id_for_label }}" style="margin-bottom: 0;">
+                        Active Borrowing Privileges (Uncheck to suspend patron account)
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="{% url 'patron_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                {% if is_edit %}Save Patron Changes{% else %}Register Member{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

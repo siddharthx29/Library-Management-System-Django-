@@ -1,0 +1,171 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Library Catalogue | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}Library Catalogue{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>Library Catalogue & Holdings</h1>
+        <p>Search, filter, and inspect volumes across university research collections and archival stacks.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'add_book' %}" class="btn btn-primary">
+            <span>+ Add Catalogue Item</span>
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter Toolbar (Stitch Style) -->
+<form method="GET" action="{% url 'catalog_list' %}" class="filter-toolbar">
+    <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="q" value="{{ query }}" class="form-input" placeholder="Search by title, author, ISBN, or accession code...">
+    </div>
+
+    <div class="filter-group">
+        <select name="category" class="form-select" style="width: auto; min-width: 170px;">
+            <option value="">All Collections</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.code }} · {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="availability" class="form-select" style="width: auto;">
+            <option value="">Any Status</option>
+            <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>Available in Stacks</option>
+            <option value="borrowed" {% if selected_availability == 'borrowed' %}selected{% endif %}>Checked Out</option>
+        </select>
+
+        <select name="sort" class="form-select" style="width: auto;">
+            <option value="title" {% if selected_sort == 'title' %}selected{% endif %}>Sort: Title (A-Z)</option>
+            <option value="author" {% if selected_sort == 'author' %}selected{% endif %}>Sort: Author (A-Z)</option>
+            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Sort: Recently Catalogued</option>
+            <option value="year" {% if selected_sort == 'year' %}selected{% endif %}>Sort: Publication Year</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Apply Filters</button>
+        {% if query or selected_category or selected_availability or selected_sort != 'title' %}
+            <a href="{% url 'catalog_list' %}" class="btn btn-secondary" title="Reset Filters">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Catalogue Table (Stitch Style) -->
+<div class="table-container">
+    <table class="academic-table">
+        <thead>
+            <tr>
+                <th>Accession</th>
+                <th>Work & Title</th>
+                <th>Author / Creator</th>
+                <th>Collection</th>
+                <th>Year</th>
+                <th>Availability</th>
+                <th style="text-align: right;">Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                    <td>
+                        <span class="accession-chip">{{ book.call_number|default:"201-B" }}</span>
+                    </td>
+                    <td>
+                        <div style="margin-bottom: 2px;">
+                            <a href="{% url 'book_detail' book.id %}" style="font-weight: 600; font-size: 0.95rem; color: var(--archive-ink);">
+                                {{ book.title }}
+                            </a>
+                            {% if book.edition %}
+                                <span style="font-size: 0.75rem; color: var(--archive-muted);">({{ book.edition }})</span>
+                            {% endif %}
+                        </div>
+                        {% if book.isbn %}
+                            <div class="isbn-chip">ISBN {{ book.isbn }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">{{ book.author }}</div>
+                        {% if book.publisher %}
+                            <div style="font-size: 0.75rem; color: var(--archive-muted);">
+                                {{ book.publisher }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if book.category %}
+                            <span style="font-size: 0.8rem; font-weight: 500; color: var(--archive-muted);">
+                                {{ book.category.name }}
+                            </span>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--archive-muted-light);">General</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--archive-ink);">
+                            {{ book.publication_year|default:"—" }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if book.available_copies > 0 %}
+                            <span class="badge badge-available">
+                                AVAILABLE ({{ book.available_copies }}/{{ book.quantity }})
+                            </span>
+                        {% else %}
+                            <span class="badge badge-borrowed">
+                                CHECKED OUT (0/{{ book.quantity }})
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {% if book.available_copies > 0 %}
+                            <a href="{% url 'issue_book' %}?book_id={{ book.id }}" class="btn btn-sm btn-primary" title="Issue to Scholar">
+                                Issue
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'edit_book' book.id %}" class="btn btn-sm btn-secondary" title="Edit Record">
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--archive-muted);">
+                        <i data-lucide="book-x" style="width: 32px; height: 32px; color: var(--archive-muted-light); margin-bottom: 8px;"></i>
+                        <div style="font-weight: 600; font-family: var(--font-serif); font-size: 1.15rem;">No catalogue volumes match the specified query.</div>
+                        <p style="font-size: 0.85rem; margin-top: 4px;">Try searching by alternative keywords or clearing the collection filters.</p>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+    <div class="pagination-wrapper">
+        <div>
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ total_count }} catalogue titles
+        </div>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&category={{ selected_category }}&availability={{ selected_availability }}&sort={{ selected_sort }}" class="page-btn">‹ Previous</a>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if p == page_obj.number %}
+                    <span class="page-btn active">{{ p }}</span>
+                {% elif p > page_obj.number|add:"-3" and p < page_obj.number|add:"3" %}
+                    <a href="?page={{ p }}&q={{ query }}&category={{ selected_category }}&availability={{ selected_availability }}&sort={{ selected_sort }}" class="page-btn">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&category={{ selected_category }}&availability={{ selected_availability }}&sort={{ selected_sort }}" class="page-btn">Next ›</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

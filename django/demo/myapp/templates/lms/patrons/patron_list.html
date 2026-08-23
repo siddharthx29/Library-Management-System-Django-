@@ -1,0 +1,151 @@
+{% extends "lms/base.html" %}
+
+{% block title %}Patron Registry | {{ platform_name }}{% endblock %}
+{% block page_title_crumb %}Patron Directory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-title">
+        <h1>Patron Registry & Membership</h1>
+        <p>Institutional members, borrowing compliance, active loans, and fine ledgers.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'patron_create' %}" class="btn btn-primary">
+            <span>+ Register Patron</span>
+        </a>
+    </div>
+</div>
+
+<!-- Filter Toolbar -->
+<form method="GET" action="{% url 'patron_list' %}" class="filter-toolbar">
+    <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="q" value="{{ query }}" class="form-input" placeholder="Search by name, ID, email, or department...">
+    </div>
+
+    <div class="filter-group">
+        <select name="role" class="form-select" style="width: auto;">
+            <option value="">-- All Roles --</option>
+            {% for role_code, role_label in roles %}
+                <option value="{{ role_code }}" {% if selected_role == role_code %}selected{% endif %}>
+                    {{ role_label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="dept" class="form-select" style="width: auto;">
+            <option value="">-- All Departments --</option>
+            {% for dept in departments %}
+                {% if dept %}
+                    <option value="{{ dept }}" {% if selected_dept == dept %}selected{% endif %}>
+                        {{ dept }}
+                    </option>
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if query or selected_role or selected_dept %}
+            <a href="{% url 'patron_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Patrons Table -->
+<div class="table-container">
+    <table class="academic-table">
+        <thead>
+            <tr>
+                <th>Patron Name & ID</th>
+                <th>Institutional Contact</th>
+                <th>Academic Department</th>
+                <th>Role</th>
+                <th>Circulation Load</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patron in patrons %}
+                <tr>
+                    <td>
+                        <a href="{% url 'patron_detail' patron.id %}" style="font-weight: 600; color: var(--color-primary);">
+                            {{ patron.name }}
+                        </a>
+                        <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-text-muted);">
+                            {{ patron.patron_id }}
+                        </div>
+                    </td>
+                    <td>
+                        <div>{{ patron.email }}</div>
+                        {% if patron.phone %}
+                            <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ patron.phone }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ patron.department }}</td>
+                    <td>
+                        <span class="badge badge-neutral">{{ patron.get_role_display }}</span>
+                    </td>
+                    <td>
+                        {% if patron.active_loans_count > 0 %}
+                            <span style="font-weight: 600; color: var(--color-primary);">
+                                {{ patron.active_loans_count }} / {{ patron.max_borrow_limit }} books
+                            </span>
+                        {% else %}
+                            <span style="color: var(--color-text-light);">0 active loans</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if patron.is_active %}
+                            <span class="badge badge-available">Active</span>
+                        {% else %}
+                            <span class="badge badge-overdue">Suspended</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'issue_book' %}?student_id={{ patron.id }}" class="btn btn-sm btn-primary" title="Issue book to this patron">
+                            Checkout
+                        </a>
+                        <a href="{% url 'patron_edit' patron.id %}" class="btn btn-sm btn-secondary">
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--archive-muted);">
+                        <i data-lucide="user-x" style="width: 32px; height: 32px; color: var(--archive-muted-light); margin-bottom: 8px;"></i>
+                        <div style="font-weight: 600; font-family: var(--font-serif); font-size: 1.15rem;">No scholars or members found matching the specified query.</div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+    <div class="pagination-wrapper">
+        <div>
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ total_count }} patrons
+        </div>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&role={{ selected_role }}&dept={{ selected_dept }}" class="page-btn">‹ Previous</a>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if p == page_obj.number %}
+                    <span class="page-btn active">{{ p }}</span>
+                {% elif p > page_obj.number|add:"-3" and p < page_obj.number|add:"3" %}
+                    <a href="?page={{ p }}&q={{ query }}&role={{ selected_role }}&dept={{ selected_dept }}" class="page-btn">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&role={{ selected_role }}&dept={{ selected_dept }}" class="page-btn">Next ›</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
